@@ -1,6 +1,7 @@
 package remote
 
 import (
+	"github.com/nyaruka/phonenumbers"
 	"github.com/sundowndev/phoneinfoga/v2/lib/number"
 )
 
@@ -16,9 +17,10 @@ type LocalScannerResponse struct {
 	CountryCode   int32  `json:"country_code,omitempty" console:"Country code,omitempty"`
 	Country       string `json:"country,omitempty" console:"Country,omitempty"`
 	Carrier       string `json:"carrier,omitempty" console:"Carrier,omitempty"`
+	Valid         bool   `json:"valid" console:"Is valid"`
 }
 
-func NewLocalScanner() Scanner {
+func NewLocalScanner() *localScanner {
 	return &localScanner{}
 }
 
@@ -26,16 +28,18 @@ func (s *localScanner) Name() string {
 	return Local
 }
 
-func (s *localScanner) Description() string {
-	return "Gather offline info about a given phone number."
+func (s *localScanner) ShouldRun(_ number.Number) bool {
+	return true
 }
 
-func (s *localScanner) DryRun(_ number.Number, _ ScannerOptions) error {
-	return nil
-}
+func (s *localScanner) Scan(n number.Number) (interface{}, error) {
+	num, err := phonenumbers.Parse(n.E164, n.Country)
+	if err != nil {
+		return nil, err
+	}
 
-func (s *localScanner) Run(n number.Number, _ ScannerOptions) (interface{}, error) {
 	data := LocalScannerResponse{
+		Valid:         phonenumbers.IsValidNumber(num),
 		RawLocal:      n.RawLocal,
 		Local:         n.Local,
 		E164:          n.E164,

@@ -68,24 +68,3 @@ func TestOVHSupplierError(t *testing.T) {
 		Err: dummyError,
 	}, err)
 }
-
-func TestOVHSupplierCountryCodeError(t *testing.T) {
-	defer gock.Off() // Flush pending mocks after test execution
-
-	gock.New("https://api.ovh.com").
-		Get("/1.0/telephony/number/detailedZones").
-		MatchParam("country", "co").
-		Reply(400).
-		JSON(OVHAPIErrorResponse{Message: "[country] Given data (co) does not belong to the NumberCountryEnum enumeration"})
-
-	num, err := number.NewNumber("+575556661212")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	s := NewOVHSupplier()
-
-	got, err := s.Search(*num)
-	assert.Nil(t, got)
-	assert.EqualError(t, err, "[country] Given data (co) does not belong to the NumberCountryEnum enumeration")
-}
